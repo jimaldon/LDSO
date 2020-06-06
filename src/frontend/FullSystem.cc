@@ -1947,26 +1947,63 @@ namespace ldso {
         unique_lock<mutex> lock(trackMutex);
         unique_lock<mutex> crlock(shellPoseMutex);
         ofstream f(filename);
+        int prevId = 0;
+        std::vector<double> prevVals;
+        Mat33 Rwc;
+        Vec3 twc;
+        bool first = true;
+        Vec3 pose{0,0,0};
+        Mat33 prevRot;
+        prevRot.setIdentity();
+        Vec3 prevTrans{0,0,0};
+        SE3 prevSe3;
+        Sim3 prevSim3;
 
         auto allKFs = globalMap->GetAllKFs();
+        std::cout<< "size is " << allKFs.size() << std::endl;
         for (auto &fr: allKFs) {
+            if(first){
+                first = false;
+                int init_point = fr->id;
+                for(int a=1; a<init_point; ++a)
+                    f << "1 0 0 0 0 1 0 0 0 0 1 0" << std::endl;
+                    //f << "0 0 0 0 0 0 0 0 0 0 0 0" << std::endl;
+                prevId = init_point;
+
+            }
+
             if (printOptimized == false) {
                 SE3 Twc = fr->getPose().inverse();
-                Mat33 Rwc = Twc.rotationMatrix();
-                Vec3 twc = Twc.translation();
-                f << fr->id << " " << setprecision(9) <<
-                  Rwc(0, 0) << " " << Rwc(0, 1) << " " << Rwc(0, 2) << " " << twc(0) << " " <<
-                  Rwc(1, 0) << " " << Rwc(1, 1) << " " << Rwc(1, 2) << " " << twc(1) << " " <<
-                  Rwc(2, 0) << " " << Rwc(2, 1) << " " << Rwc(2, 2) << " " << twc(2) << endl;
-            } else {
-                Sim3 Swc = fr->getPoseOpti().inverse();
-                Mat33 Rwc = Swc.rotationMatrix();
-                Vec3 twc = Swc.translation();
-                f << fr->id << " " << setprecision(9) <<
-                  Rwc(0, 0) << " " << Rwc(0, 1) << " " << Rwc(0, 2) << " " << twc(0) << " " <<
-                  Rwc(1, 0) << " " << Rwc(1, 1) << " " << Rwc(1, 2) << " " << twc(1) << " " <<
-                  Rwc(2, 0) << " " << Rwc(2, 1) << " " << Rwc(2, 2) << " " << twc(2) << endl;
+                Rwc = Twc.rotationMatrix();
+                twc = Twc.translation();
+                prevSe3 = Twc;
             }
+            else {
+                Sim3 Swc = fr->getPoseOpti().inverse();
+                Rwc = Swc.rotationMatrix();
+                twc = Swc.translation();
+                prevSim3 = Swc;
+            }
+            int gap = 0;
+            if(fr->id - prevId > 1){
+                gap = fr->id - prevId;
+                for(int i=0;i<gap-1;++i){
+                    for(int j=0; j<11; j++)
+                        f << setprecision(9) << prevVals[j] << " ";
+                    f << setprecision(9) << prevVals[11] << std::endl;
+                }
+            }
+           
+            prevId = fr->id;
+            prevRot = Rwc;
+            prevTrans = twc;
+            prevVals = { prevRot(0, 0), prevRot(0, 1) , prevRot(0, 2) , prevTrans(0) ,prevRot(1, 0) , prevRot(1, 1) , prevRot(1, 2) , prevTrans(1) ,prevRot(2, 0) , prevRot(2, 1) , prevRot(2, 2) , prevTrans(2)};
+            
+            f << setprecision(9) <<
+                  prevRot(0, 0) << " " << prevRot(0, 1) << " " << prevRot(0, 2) << " " << prevTrans(0) << " " <<
+                  prevRot(1, 0) << " " << prevRot(1, 1) << " " << prevRot(1, 2) << " " << prevTrans(1) << " " <<
+                  prevRot(2, 0) << " " << prevRot(2, 1) << " " << prevRot(2, 2) << " " << prevTrans(2) << endl;
+ 
         }
         f.close();
 

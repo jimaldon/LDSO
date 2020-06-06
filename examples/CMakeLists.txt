@@ -12,3 +12,8 @@ target_link_libraries( run_dso_euroc
 add_executable( run_dso_kitti run_dso_kitti.cc )
 target_link_libraries( run_dso_kitti
   ldso ${THIRD_PARTY_LIBS} )
+
+# Tesla dataset
+add_executable( run_dso_tesla run_dso_tesla.cc )
+target_link_libraries( run_dso_tesla
+  ldso ${THIRD_PARTY_LIBS} )

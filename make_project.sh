@@ -5,6 +5,7 @@ NUM_PROC=4
 
 BASEDIR="$PWD"
 
+
 cd "$BASEDIR/thirdparty/DBoW3"
 mkdir build
 cd build

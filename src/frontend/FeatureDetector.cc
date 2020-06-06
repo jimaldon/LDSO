@@ -32,11 +32,11 @@ namespace ldso {
     }
 
     int FeatureDetector::DetectCorners(int nFeatures, shared_ptr<Frame> &frame) {
-
+        int mask = 180;
         // grid it
-        int gridsize = int(sqrtf(wG[0] * hG[0] / nFeatures) + 0.5);
-        int gridX = wG[0] / gridsize + 1, gridY = hG[0] / gridsize + 1;
-        float nfeatInGrid = float(nFeatures) / (wG[0] * hG[0]) * (gridsize * gridsize);
+        int gridsize = int(sqrtf(wG[0] * (hG[0]-mask) / nFeatures) + 0.5);
+        int gridX = wG[0] / gridsize + 1, gridY = (hG[0]-mask) / gridsize + 1;
+        float nfeatInGrid = float(nFeatures) / (wG[0] * (hG[0]-mask)) * (gridsize * gridsize);
 
         float maxScore = 0, scoreTH = 0;
         int skip = (HALF_PATCH_SIZE * 2 / gridsize) + 1;

@@ -78,7 +78,8 @@ public:
     enum DatasetType {
         TUM_MONO,
         KITTI,
-        EUROC
+        EUROC,
+        TESLA
     };
 
     ImageFolderReader(DatasetType datasetType,
@@ -137,6 +138,8 @@ public:
             loadTimestampsEUROC();
         } else if (datasetType == KITTI) {
             loadTimestampsKitti();
+        } else if (datasetType == TESLA) {
+            loadTimestampsTesla();
         }
     }
 
@@ -315,6 +318,39 @@ private:
         for (size_t i = 0; i < timestamps.size(); i++) {
             files.push_back((fmt % path % i).str());
         }
+
+        LOG(INFO) << "Load total " << timestamps.size() << " data entries." << endl;
+    }
+
+    inline void loadTimestampsTesla() {
+        LOG(INFO) << "Loading Tesla timestamps!" << endl;
+        std::ifstream tr;
+        std::string timesFile = path + "/times.txt";
+
+        tr.open(timesFile.c_str());
+        if (!tr) {
+            LOG(INFO) << "cannot find timestamp file at " << path + "/times.txt" << endl;
+            return;
+        }
+
+        while (!tr.eof() && tr.good()) {
+
+            string s;
+            getline(tr,s);
+            if(!s.empty())
+            {
+                stringstream ss;
+                ss << s;
+                double t;
+                string sRGB;
+                ss >> t;
+                //vTimestamps.push_back(t);
+                timestamps.push_back(t/1e6); //for tesla times.txt which is in microseconds
+                ss >> sRGB;
+                files.push_back(sRGB);
+        }
+    }
+        tr.close();
 
         LOG(INFO) << "Load total " << timestamps.size() << " data entries." << endl;
     }
